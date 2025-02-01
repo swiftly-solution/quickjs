@@ -1,0 +1,59 @@
+name: "QuickJS Builder"
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+
+jobs:
+    source_build:
+        name: Build
+        runs-on: ${{ matrix.os }}
+        container: ${{ matrix.container }}
+        strategy:
+          fail-fast: false
+          matrix:
+            os: [ubuntu-latest, windows-latest]
+            include:
+              - os: ubuntu-latest
+                container: registry.gitlab.steamos.cloud/steamrt/sniper/sdk
+        steps:
+          - name: Checkout
+            uses: actions/checkout@v4
+            with:
+              path: quickjs
+              submodules: recursive
+          - name: Build - Linux
+            if: matrix.os == 'ubuntu-latest'
+            working-directory: quickjs
+            shell: bash
+            run: |
+              export CFLAGS=-fPIC
+              make -j$(nproc)
+          - name: Build - Windows
+            if: matrix.os == 'windows-latest'
+            working-directory: quickjs
+            run: |
+              make
+
+          - name: Upload Artifacts Linux
+            if: matrix.os == 'ubuntu-latest'
+            uses: actions/upload-artifact@v4
+            with:
+              name: Swiftly.JS.Linux
+              path: ${{ github.workspace }}/quickjs/build/libqjs.a
+
+          - name: Upload Headers
+            if: matrix.os == 'ubuntu-latest'
+            uses: actions/upload-artifact@v4
+            with:
+              name: Swiftly.JS.Headers
+              path: ${{ github.workspace }}/quickjs/quickjs.h
+                
+          - name: Upload Artifacts Windows
+            if: matrix.os == 'windows-latest'
+            uses: actions/upload-artifact@v4
+            with:
+              name: Swiftly.JS.Windows
+              path: ${{ github.workspace }}/quickjs/build/Release/qjs.lib
