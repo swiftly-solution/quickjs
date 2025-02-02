@@ -30,12 +30,14 @@ jobs:
             shell: bash
             run: |
               export CFLAGS=-fPIC
-              make -j$(nproc)
+              cmake -B build -DCMAKE_INSTALL_PREFIX=/usr/local -DBUILD_QJS_LIBC=ON
+              cmake --build build -j $(nproc)
+              
           - name: Build - Windows
             if: matrix.os == 'windows-latest'
             working-directory: quickjs
             run: |
-              cmake -B build -G "Visual Studio 17 2022" -A x64
+              cmake -B build -G "Visual Studio 17 2022" -A x64 -DBUILD_QJS_LIBC=ON
               cmake --build build --config Release
 
           - name: Upload Artifacts Linux
