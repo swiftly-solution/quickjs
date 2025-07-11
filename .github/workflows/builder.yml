@@ -45,7 +45,7 @@ jobs:
             uses: actions/upload-artifact@v4
             with:
               name: Swiftly.JS.Linux
-              path: ${{ github.workspace }}/quickjs/build/libqjs.a
+              path: ${{ github.workspace }}/quickjs/build/libqjs.so
 
           - name: Upload Headers
             if: matrix.os == 'ubuntu-latest'
@@ -59,4 +59,4 @@ jobs:
             uses: actions/upload-artifact@v4
             with:
               name: Swiftly.JS.Windows
-              path: ${{ github.workspace }}/quickjs/build/Release/qjs.lib
+              path: ${{ github.workspace }}/quickjs/build/Release/*

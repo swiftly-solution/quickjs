@@ -121,6 +121,7 @@ endmacro()
 xoption(BUILD_SHARED_LIBS "Build a shared library" OFF)
 if(BUILD_SHARED_LIBS)
     message(STATUS "Building a shared library")
+    add_definitions(-D${OPTION_NAME})
 endif()
 
 # note: QJS_ENABLE_TSAN is currently incompatible with the other sanitizers but we
@@ -219,6 +220,8 @@ set(qjs_sources
     quickjs.c
 )
 
+add_definitions(-DQUICKJS_BUILDDLL)
+
 if(QJS_BUILD_LIBC)
     list(APPEND qjs_sources quickjs-libc.c)
 endif()
@@ -265,59 +268,6 @@ if(EMSCRIPTEN)
     target_link_libraries(qjs_wasm m)
 endif()
 
-
-# QuickJS bytecode compiler
-#
-
-add_executable(qjsc
-    qjsc.c
-)
-add_qjs_libc_if_needed(qjsc)
-add_static_if_needed(qjsc)
-target_compile_definitions(qjsc PRIVATE ${qjs_defines})
-target_link_libraries(qjsc qjs)
-
-
-# QuickJS CLI
-#
-
-add_executable(qjs_exe
-    gen/repl.c
-    gen/standalone.c
-    qjs.c
-)
-add_qjs_libc_if_needed(qjs_exe)
-add_static_if_needed(qjs_exe)
-set_target_properties(qjs_exe PROPERTIES
-    OUTPUT_NAME "qjs"
-)
-target_compile_definitions(qjs_exe PRIVATE ${qjs_defines})
-target_link_libraries(qjs_exe qjs)
-if(NOT WIN32)
-    set_target_properties(qjs_exe PROPERTIES ENABLE_EXPORTS TRUE)
-endif()
-if(QJS_BUILD_CLI_WITH_MIMALLOC OR QJS_BUILD_CLI_WITH_STATIC_MIMALLOC)
-    find_package(mimalloc REQUIRED)
-    # Upstream mimalloc doesn't provide a way to know if both libraries are supported.
-    if(QJS_BUILD_CLI_WITH_STATIC_MIMALLOC)
-        target_link_libraries(qjs_exe mimalloc-static)
-    else()
-        target_link_libraries(qjs_exe mimalloc)
-    endif()
-endif()
-
-# Test262 runner
-#
-
-if(NOT EMSCRIPTEN)
-    add_executable(run-test262
-        run-test262.c
-    )
-    add_qjs_libc_if_needed(run-test262)
-    target_compile_definitions(run-test262 PRIVATE ${qjs_defines})
-    target_link_libraries(run-test262 qjs)
-endif()
-
 # Interrupt test
 #
 
@@ -336,14 +286,6 @@ add_executable(unicode_gen EXCLUDE_FROM_ALL
     unicode_gen.c
 )
 target_compile_definitions(unicode_gen PRIVATE ${qjs_defines})
-
-add_executable(function_source
-    gen/function_source.c
-)
-add_qjs_libc_if_needed(function_source)
-target_include_directories(function_source PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_compile_definitions(function_source PRIVATE ${qjs_defines})
-target_link_libraries(function_source qjs)
 
 # Examples
 #
@@ -416,8 +358,6 @@ if(NOT IOS)
     if(QJS_BUILD_LIBC)
         install(FILES quickjs-libc.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
     endif()
-    install(TARGETS qjs_exe RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-    install(TARGETS qjsc RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
     install(TARGETS qjs EXPORT qjsConfig
             RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
             LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
