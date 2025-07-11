@@ -121,7 +121,6 @@ endmacro()
 xoption(BUILD_SHARED_LIBS "Build a shared library" OFF)
 if(BUILD_SHARED_LIBS)
     message(STATUS "Building a shared library")
-    add_definitions(-D${OPTION_NAME})
 endif()
 
 # note: QJS_ENABLE_TSAN is currently incompatible with the other sanitizers but we
